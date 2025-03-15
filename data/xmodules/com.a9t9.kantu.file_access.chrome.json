@@ -1,0 +1,23 @@
+{
+  "name": "com.a9t9.kantu.file_access",
+  "description": "UI.Vision File Access",
+  "path": "HOST_PATH",
+  "type": "stdio",
+  "allowed_origins": [
+    "chrome-extension://dpdlhdbnlaefobeejcgfidghdllhemkl/",
+    "chrome-extension://chfonhilonimekkjdiojngiemaajoele/",
+    "chrome-extension://kknkjjhfadpnkmbdhmemjlklhhffkgal/",
+    "chrome-extension://fffapfncphmnlbhgcmbkdhpbjfbjcfco/",	
+	"chrome-extension://gcbalfbdmfieckjlnblleoemohcganoc/",
+    "chrome-extension://ngkbmimfhhaabikggkeidhgfgjddfidk/",
+    "chrome-extension://mkplanokebelajeokbfnigdkhkefgdif/",
+	"chrome-extension://eenjdnjldapjajjofmldgmkjaienebbj/",
+	"chrome-extension://fpfipmndcbfnofbedjokcjlfogdpmcop/",
+	"chrome-extension://ejfgcoabhgdgaafjeindjmegacbklcin/",
+	"chrome-extension://cacjdaggjlpecjdbjgjmiphpkmoaijgg/",
+	"chrome-extension://goapmjinbaeomoemgdcnnhoedopjnddd/",
+	"chrome-extension://jlefpjinggjhccheobegboicdcacepfg/",
+	"chrome-extension://ngkbmimfhhaabikggkeidhgfgjddfidk/",	
+	"chrome-extension://ankheondabfngkjomknppbpkjcdabdlg/"
+  ]
+}

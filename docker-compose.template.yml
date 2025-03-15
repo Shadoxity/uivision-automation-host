@@ -1,0 +1,28 @@
+version: '3'
+
+services:
+  uivision-automation:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"     # API port
+      - "6080:6080"     # noVNC port for web-based access
+    environment:
+      - API_PORT=3000
+      # Note: If your API key or password contains special characters like $, 
+      # you need to escape them with an additional $ (e.g., $ becomes $$)
+      - API_KEY=your-api-key-here  # Replace with your actual API key
+      - VNC_PASSWORD=your-vnc-password-here  # Replace with your actual VNC password
+      - VNC_RESOLUTION=1920x1080
+    volumes:
+      # Mount the data directory to make it easier to update macros
+      #- ./data:/usr/src/app/data
+      - /path/to/your/macros:/usr/src/uivision
+    restart: unless-stopped
+    # These options are REQUIRED for Firefox to run properly in the container
+    # Do not remove them or the container will not function correctly
+    cap_add:
+      - SYS_ADMIN
+    security_opt:
+      - seccomp=unconfined 
