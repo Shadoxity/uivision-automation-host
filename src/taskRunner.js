@@ -1,7 +1,6 @@
 const { exec } = require('child_process');
 const path = require('path');
 const fs = require('fs');
-const { sendWebhookResults } = require('./utils');
 
 // Keep track of running processes
 let runningProcesses = {};
@@ -67,36 +66,18 @@ async function runTest(name, outboundWebhook, isFolder = false, urlParams = {}, 
   console.log(`Executing command: ${command}`);
   
   return new Promise((resolve, reject) => {
-    // Flag to track if a webhook has already been sent
-    let webhookSent = false;
-    
     // Execute the command
     const process = exec(command, (error, stdout, stderr) => {
       if (error) {
         console.error(`Error executing command: ${error.message}`);
         
         // Check for specific error codes
-        let errorMessage = error.message;
         if (error.code === 3) {
-          errorMessage = "Chromium is already running but not responding. Please kill the existing Chromium process and try again.";
-          console.error(errorMessage);
+          console.error("Chromium is already running but not responding. Please kill the existing Chromium process and try again.");
         }
         
-        // Only send webhook if one hasn't been sent by the Chromium script
-        if (!webhookSent && !stdout.includes("Sending JSON payload to callback URL")) {
-          webhookSent = true;
-          console.log("Sending error webhook from exec callback");
-          // Send error to the outbound webhook
-          sendWebhookResults(outboundWebhook, {
-            status: 'error',
-            name,
-            isFolder,
-            newInstance,
-            timeout,
-            error: errorMessage,
-            timestamp: new Date().toISOString()
-          }).catch(err => console.error('Error sending webhook:', err));
-        }
+        // Remove from running processes
+        delete runningProcesses[processId];
         
         reject(error);
         return;
@@ -107,20 +88,17 @@ async function runTest(name, outboundWebhook, isFolder = false, urlParams = {}, 
       }
       
       console.log(`Command stdout: ${stdout}`);
-      
-      // Check if the script already sent a webhook
-      if (stdout.includes("Sending JSON payload to callback URL")) {
-        console.log("Webhook was sent by the script, not sending another one");
-        webhookSent = true;
-      }
-      
       console.log(`Test "${name}" completed`);
       
       // Remove from running processes
       delete runningProcesses[processId];
       
+      // Check if there's an error status in the output
+      const hasErrorStatus = stdout.includes("Status=Error") || 
+                            stdout.includes("Setting exit code to 1 based on Status=Error");
+      
       resolve({
-        status: 'completed',
+        status: hasErrorStatus ? 'error' : 'completed',
         name,
         isFolder,
         newInstance,
@@ -138,23 +116,6 @@ async function runTest(name, outboundWebhook, isFolder = false, urlParams = {}, 
       
       // Remove from running processes
       delete runningProcesses[processId];
-      
-      // Check if the script already sent a webhook by looking at the webhookSent flag
-      if (code !== 0 && !webhookSent) {
-        // Only send webhook if one hasn't been sent already
-        webhookSent = true;
-        console.log(`Sending error webhook from exit handler with code ${code}`);
-        // Send error to the outbound webhook
-        sendWebhookResults(outboundWebhook, {
-          status: 'error',
-          name,
-          isFolder,
-          newInstance,
-          timeout,
-          error: `Process exited with code ${code}`,
-          timestamp: new Date().toISOString()
-        }).catch(err => console.error('Error sending webhook:', err));
-      }
     });
   });
 }

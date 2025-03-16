@@ -11,8 +11,7 @@ app.use(express.json());
 // Webhook endpoint
 app.post('/run-macro', async (req, res) => {
   const apiKey = req.headers['x-api-key'];
-  console.log(`Received API key: ${apiKey}`);
-  console.log(`Expected API key: ${API_KEY}`);
+  // Validate API key without logging it
   if (!validateApiKey(apiKey, API_KEY)) {
     return res.status(401).json({ error: 'Unauthorized' });
   }

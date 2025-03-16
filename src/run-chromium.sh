@@ -186,14 +186,6 @@ if [ "$MACRO_COMPLETED" = true ]; then
     echo "Macro completed successfully"
     EXIT_CODE=0
   fi
-  if ps -p $CHROMIUM_PID > /dev/null; then
-    if [[ "$URL" == *"closeBrowser=1"* ]] && [[ "$URL" != *"closeBrowser=0"* ]] && [[ "$URL" != *"closeBrowser=false"* ]]; then
-      echo "Closing Chromium process (PID: $CHROMIUM_PID)"
-      kill $CHROMIUM_PID 2>/dev/null || true
-    else
-      echo "Leaving Chromium running as closeBrowser is not set to 1"
-    fi
-  fi
 else
   echo "Timeout waiting for macro completion or Chromium exited unexpectedly"
   EXIT_CODE=2
