@@ -59,7 +59,7 @@ async function runTest(name, outboundWebhook, isFolder = false, urlParams = {}, 
   const urlParamsStr = JSON.stringify(urlParams);
   
   // Path to the shell script
-  const scriptPath = '/usr/src/app/src/run-firefox.sh';
+  const scriptPath = '/usr/src/app/src/run-chromium.sh';
   
   // Build the command to run the shell script
   const command = `${scriptPath} "${name}" "${outboundWebhook}" "${isFolder ? 1 : 0}" '${urlParamsStr}' "${newInstance ? 1 : 0}" "${timeout}"`;
@@ -78,13 +78,14 @@ async function runTest(name, outboundWebhook, isFolder = false, urlParams = {}, 
         // Check for specific error codes
         let errorMessage = error.message;
         if (error.code === 3) {
-          errorMessage = "Firefox is already running but not responding. Please kill the existing Firefox process and try again.";
+          errorMessage = "Chromium is already running but not responding. Please kill the existing Chromium process and try again.";
           console.error(errorMessage);
         }
         
-        // Only send webhook if one hasn't been sent by the Firefox script
+        // Only send webhook if one hasn't been sent by the Chromium script
         if (!webhookSent && !stdout.includes("Sending JSON payload to callback URL")) {
           webhookSent = true;
+          console.log("Sending error webhook from exec callback");
           // Send error to the outbound webhook
           sendWebhookResults(outboundWebhook, {
             status: 'error',
@@ -107,8 +108,11 @@ async function runTest(name, outboundWebhook, isFolder = false, urlParams = {}, 
       
       console.log(`Command stdout: ${stdout}`);
       
-      // UI.Vision will handle sending results to the outbound webhook
-      // via the callback parameter
+      // Check if the script already sent a webhook
+      if (stdout.includes("Sending JSON payload to callback URL")) {
+        console.log("Webhook was sent by the script, not sending another one");
+        webhookSent = true;
+      }
       
       console.log(`Test "${name}" completed`);
       
@@ -135,9 +139,11 @@ async function runTest(name, outboundWebhook, isFolder = false, urlParams = {}, 
       // Remove from running processes
       delete runningProcesses[processId];
       
+      // Check if the script already sent a webhook by looking at the webhookSent flag
       if (code !== 0 && !webhookSent) {
         // Only send webhook if one hasn't been sent already
         webhookSent = true;
+        console.log(`Sending error webhook from exit handler with code ${code}`);
         // Send error to the outbound webhook
         sendWebhookResults(outboundWebhook, {
           status: 'error',

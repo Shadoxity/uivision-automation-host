@@ -38,7 +38,7 @@ ENV DISPLAY=:${DEF_VNC_DISPLAY}.${DEF_VNC_SCREEN} \
 RUN apt update && apt full-upgrade -qqy && \
     apt install -qqy --no-install-recommends \
     curl wget unzip tini supervisor bash xvfb x11vnc novnc websockify fluxbox xterm nano \
-    firefox-esr libfuse2 && \
+    chromium libfuse2 wmctrl eterm && \
     curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
     apt install -qqy --no-install-recommends nodejs && \
     apt autoremove --purge -y && apt clean && rm -rf /var/lib/apt/lists/*
@@ -60,16 +60,23 @@ COPY src ./src
 COPY data ./data
 
 # Setup Firefox profile
-RUN mkdir -p /root/.mozilla/firefox && \
-    cp /usr/src/app/data/profiles.ini /root/.mozilla/firefox/profiles.ini
-COPY data/firefox_profile.zip /tmp/
-RUN unzip /tmp/firefox_profile.zip -d /root/.mozilla/firefox/ && rm /tmp/firefox_profile.zip
+#RUN mkdir -p /root/.mozilla/firefox && \
+#    cp /usr/src/app/data/profiles.ini /root/.mozilla/firefox/profiles.ini
+#COPY data/firefox_profile.zip /tmp/
+#RUN unzip /tmp/firefox_profile.zip -d /root/.mozilla/firefox/ && rm /tmp/firefox_profile.zip
+
+# Set up Chromium user directory
+RUN mkdir -p /root/.config/chromium/ && \
+    chown -R root:root /root/.config/chromium/
+COPY data/chromium_profile.zip /tmp/
+RUN unzip -o /tmp/chromium_profile.zip -d /root/.config/chromium/ #&& rm /tmp/chromium_profile.zip
+
 
 # Make browser run scripts executable and ensure proper permissions
-RUN chmod +x /usr/src/app/src/run-firefox.sh && \
-    ls -la /usr/src/app/src/run-firefox.sh && \
+RUN chmod +x /usr/src/app/src/run-chromium.sh && \
+    ls -la /usr/src/app/src/run-chromium.sh && \
     # Create a symlink to ensure the script is accessible from PATH
-    ln -sf /usr/src/app/src/run-firefox.sh /usr/local/bin/run-firefox.sh
+    ln -sf /usr/src/app/src/run-chromium.sh /usr/local/bin/run-chromium.sh
 
 # Create custom entrypoint script to start the Node.js server
 RUN mkdir -p ${CUSTOM_ENTRYPOINTS_DIR} && \

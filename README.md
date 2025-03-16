@@ -1,17 +1,17 @@
 # UI.Vision Automation Server
 
-A Dockerized solution for automating UI testing workflows using Firefox with the UI.Vision extension in a VNC environment.
+A Dockerized solution for automating UI testing workflows using Chromium with the UI.Vision extension in a VNC environment.
 
 ## Overview
 
-This project provides a REST API that accepts webhook requests to run UI.Vision macros and reports results back via another webhook. It's designed to handle macro execution with isolated Firefox instances running in a virtual desktop environment.
+This project provides a REST API that accepts webhook requests to run UI.Vision macros and reports results back via another webhook. It's designed to handle macro execution with isolated Chromium instances running in a virtual desktop environment.
 
 ## Features
 
 - Authenticated REST API for triggering UI.Vision tests
 - Support for running individual macros or entire folders
 - Flexible URL parameters for customizing UI.Vision behavior
-- Concurrent test execution with isolated Firefox instances
+- Concurrent test execution with isolated Chromium instances
 - Web-based VNC access for monitoring and debugging
 - Webhook-based result reporting
 - Docker containerization for easy deployment
@@ -28,7 +28,7 @@ This project provides a REST API that accepts webhook requests to run UI.Vision 
 
 This container requires specific Docker capabilities to run properly:
 
-- `SYS_ADMIN` capability: Required for Firefox to run properly in the container
+- `SYS_ADMIN` capability: Required for Chromium to run properly in the container
 - `seccomp=unconfined` security option: Needed to allow proper browser functionality
 
 These requirements are automatically included in the docker-compose.yml template, but if you're running the container directly with `docker run`, you must include these options:
@@ -161,7 +161,7 @@ Parameters:
 - `name`: The name of the macro or folder to run (required)
 - `isFolder`: Whether the name refers to a folder (default: false)
 - `outboundWebhook`: URL to send results to when the macro is complete (required)
-- `newInstance`: Whether to force a new Firefox instance (default: true)
+- `newInstance`: Whether to force a new Chromium instance (default: true)
 - `timeout`: Maximum time in seconds to wait for macro completion (default: 300 - 5 minutes)
 - `urlParams`: URL parameters to customize UI.Vision behavior, including variables
 
@@ -203,7 +203,7 @@ You can access the container's desktop environment using a web browser:
 
 1. Open your browser and navigate to `http://localhost:6080` (or your server's IP)
 2. Enter the password you set in the `VNC_PASSWORD` environment variable
-3. You'll see the desktop environment where Firefox is running with UI.Vision
+3. You'll see the desktop environment where Chromium is running with UI.Vision
 
 This web-based VNC access makes it easy to monitor and debug your UI.Vision macros without needing a dedicated VNC client.
 
@@ -212,7 +212,7 @@ This web-based VNC access makes it easy to monitor and debug your UI.Vision macr
 This project uses the UI.Vision command line interface to run macros in a virtual desktop environment. The integration works as follows:
 
 1. The server receives a webhook request with macro/folder details and parameters
-2. It launches Firefox with the UI.Vision extension in the VNC environment
+2. It launches Chromium with the UI.Vision extension in the VNC environment
 3. It passes command line parameters to UI.Vision:
    - `macro` or `folder`: The name of the macro or folder to run
    - `direct`: Set to 1 to run directly without dialog
@@ -220,34 +220,35 @@ This project uses the UI.Vision command line interface to run macros in a virtua
    - `savelog`: The name of the log file to save results to (your mounted data folder)
    - Additional URL parameters as specified in the `urlParams` object
 
-### Firefox Instance Control
+### Chromium Instance Control
 
-The `newInstance` parameter controls how Firefox is launched:
+The `newInstance` parameter controls how Chromium is launched:
 
-- When set to `true` (default), Firefox is launched with `--no-remote --new-instance` flags, ensuring a completely isolated browser instance
-- When set to `false`, the script checks if Firefox is already running:
-  - If Firefox is running and responsive, it opens the URL in a new tab using the `--new-tab` flag
-  - If Firefox is running but not responding, the system will automatically kill all Firefox processes using `pkill` and start a new instance
-  - If the system cannot kill all Firefox processes, it will exit with an error code and return an error message
-  - If no Firefox is running, it starts a new instance with just the `--no-remote` flag
+- When set to `true` (default), a new tab is opened if Chromium is already running
+- When set to `false`, the system will reuse the existing Chromium instance if available
 
-This approach prevents the "Firefox is already running" error while allowing you to either use an existing Firefox instance or create a new one based on your needs. The responsiveness check and automatic process cleanup ensure that the system can recover from hung Firefox processes without manual intervention in most cases.
+Chromium is always launched with these options for security and stability:
+```
+--no-sandbox --no-default-browser-check --no-first-run --disable-popup-blocking --disable-session-crashed-bubble --disable-infobars --disable-notifications --disable-save-password-bubble --disable-translate --disable-sync-preferences
+```
+
+This approach prevents browser startup issues while allowing you to either use an existing Chromium instance or create a new one based on your needs.
 
 ### Macro Execution and Completion
 
-The system monitors the log file for macro completion rather than waiting for Firefox to exit. This allows:
+The system monitors the log file for macro completion rather than waiting for Chromium to exit. This allows:
 
-1. Detection of macro completion even if Firefox remains open
+1. Detection of macro completion even if Chromium remains open
 2. Proper handling of the `closeBrowser` parameter:
-   - When set to "1", Firefox is automatically closed after the macro completes
-   - When set to "0", Firefox remains open for subsequent macro executions
+   - When set to "1", Chromium is automatically closed after the macro completes
+   - When set to "0", Chromium remains open for subsequent macro executions
 
 The script detects completion by looking for:
 - `Status=OK` (successful completion)
 - `Status=Error` (error during execution)
 - `[status] Macro completed` (completion message in the log)
 
-If the macro doesn't complete within the timeout period, the script will terminate Firefox and report a timeout error.
+If the macro doesn't complete within the timeout period, the script will terminate Chromium and report a timeout error.
 
 ### Timeout Configuration
 
@@ -256,7 +257,7 @@ The system supports configurable timeout settings for macro execution:
 - Default timeout is 300 seconds (5 minutes)
 - You can specify a custom timeout in the API request using the `timeout` parameter
 - The timeout value must be a positive integer representing seconds
-- If a macro doesn't complete within the specified timeout, Firefox will be terminated and an error will be reported
+- If a macro doesn't complete within the specified timeout, Chromium will be terminated and an error will be reported
 
 For long-running macros, you may need to increase the timeout value. For example, to set a 10-minute timeout:
 
