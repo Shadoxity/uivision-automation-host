@@ -17,6 +17,7 @@ This project provides a REST API that accepts webhook requests to run UI.Vision 
 - Docker containerization for easy deployment
 - Configurable timeout settings for long-running macros
 - Logs and other run output data is available in your mounted data drive
+- Browser downloads save to the uivision folder automatically
 
 ## Setup
 
